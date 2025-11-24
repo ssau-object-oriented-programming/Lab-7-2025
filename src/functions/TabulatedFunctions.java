@@ -108,6 +108,18 @@ public final class TabulatedFunctions {
         return createTabulatedFunction(pts);
     }
 
+    public static TabulatedFunction inputTabulatedFunction(InputStream in, Class<? extends TabulatedFunction> clazz) throws IOException {
+        DataInputStream dis = new DataInputStream(new BufferedInputStream(in));
+        int n = dis.readInt();
+        FunctionPoint[] pts = new FunctionPoint[n];
+        for (int i = 0; i < n; i++) {
+            double x = dis.readDouble();
+            double y = dis.readDouble();
+            pts[i] = new FunctionPoint(x, y);
+        }
+        return createTabulatedFunction(clazz, pts);
+    }
+
     public static void writeTabulatedFunction(TabulatedFunction function, Writer out) throws IOException {
         PrintWriter pw = new PrintWriter(new BufferedWriter(out));
         try {
@@ -137,5 +149,22 @@ public final class TabulatedFunctions {
             pts[i] = new FunctionPoint(x, y);
         }
         return createTabulatedFunction(pts);
+    }
+
+    public static TabulatedFunction readTabulatedFunction(Reader in, Class<? extends TabulatedFunction> clazz) throws IOException {
+        StreamTokenizer st = new StreamTokenizer(in);
+        st.parseNumbers();
+        int n;
+        if (st.nextToken() != StreamTokenizer.TT_NUMBER) throw new IOException("Invalid format: expected number of points");
+        n = (int) st.nval;
+        FunctionPoint[] pts = new FunctionPoint[n];
+        for (int i = 0; i < n; i++) {
+            if (st.nextToken() != StreamTokenizer.TT_NUMBER) throw new IOException("Invalid format: expected x");
+            double x = st.nval;
+            if (st.nextToken() != StreamTokenizer.TT_NUMBER) throw new IOException("Invalid format: expected y");
+            double y = st.nval;
+            pts[i] = new FunctionPoint(x, y);
+        }
+        return createTabulatedFunction(clazz, pts);
     }
 }
