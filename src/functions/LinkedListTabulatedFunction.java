@@ -4,6 +4,8 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class LinkedListTabulatedFunction implements TabulatedFunction, Externalizable {
 
@@ -431,5 +433,49 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
             current = current.next;
         }
         return new LinkedListTabulatedFunction(pts);
+    }
+
+    @Override
+    public Iterator<FunctionPoint> iterator() {
+        return new Iterator<FunctionPoint>() {
+            private FunctionNode cur = head.next;
+            private int idx = 0;
+
+            @Override
+            public boolean hasNext() {
+                return idx < pointsCount;
+            }
+
+            @Override
+            public FunctionPoint next() {
+                if (!hasNext()) throw new NoSuchElementException();
+                FunctionPoint p = new FunctionPoint(cur.point);
+                cur = cur.next;
+                idx++;
+                return p;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    public static class LinkedListTabulatedFunctionFactory implements TabulatedFunctionFactory {
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
+            return new LinkedListTabulatedFunction(leftX, rightX, pointsCount);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) {
+            return new LinkedListTabulatedFunction(leftX, rightX, values);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(FunctionPoint[] points) {
+            return new LinkedListTabulatedFunction(points);
+        }
     }
 }

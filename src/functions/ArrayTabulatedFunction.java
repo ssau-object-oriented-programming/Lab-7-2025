@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ArrayTabulatedFunction implements TabulatedFunction, Externalizable {
     private FunctionPoint[] points;
@@ -285,5 +287,45 @@ public class ArrayTabulatedFunction implements TabulatedFunction, Externalizable
             pts[i] = (FunctionPoint) points[i].clone();
         }
         return new ArrayTabulatedFunction(pts);
+    }
+
+    @Override
+    public Iterator<FunctionPoint> iterator() {
+        return new Iterator<FunctionPoint>() {
+            private int idx = 0;
+
+            @Override
+            public boolean hasNext() {
+                return idx < pointsCount;
+            }
+
+            @Override
+            public FunctionPoint next() {
+                if (!hasNext()) throw new NoSuchElementException();
+                return new FunctionPoint(points[idx++]);
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    public static class ArrayTabulatedFunctionFactory implements TabulatedFunctionFactory {
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
+            return new ArrayTabulatedFunction(leftX, rightX, pointsCount);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) {
+            return new ArrayTabulatedFunction(leftX, rightX, values);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(FunctionPoint[] points) {
+            return new ArrayTabulatedFunction(points);
+        }
     }
 }

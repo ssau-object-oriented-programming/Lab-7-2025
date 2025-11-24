@@ -1,11 +1,73 @@
 package functions;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 public final class TabulatedFunctions {
     private static final double EPS = 1e-10;
 
+    private static TabulatedFunctionFactory factory = new ArrayTabulatedFunction.ArrayTabulatedFunctionFactory();
+
     private TabulatedFunctions() {}
+
+    public static void setTabulatedFunctionFactory(TabulatedFunctionFactory f) {
+        if (f == null) throw new IllegalArgumentException("Factory cannot be null");
+        factory = f;
+    }
+
+    public static TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
+        return factory.createTabulatedFunction(leftX, rightX, pointsCount);
+    }
+
+    public static TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) {
+        return factory.createTabulatedFunction(leftX, rightX, values);
+    }
+
+    public static TabulatedFunction createTabulatedFunction(FunctionPoint[] points) {
+        return factory.createTabulatedFunction(points);
+    }
+
+    public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> clazz, double leftX, double rightX, int pointsCount) {
+        try {
+            Constructor<? extends TabulatedFunction> ctor = clazz.getConstructor(double.class, double.class, int.class);
+            return ctor.newInstance(leftX, rightX, pointsCount);
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> clazz, double leftX, double rightX, double[] values) {
+        try {
+            Constructor<? extends TabulatedFunction> ctor = clazz.getConstructor(double.class, double.class, double[].class);
+            return ctor.newInstance(leftX, rightX, values);
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> clazz, FunctionPoint[] points) {
+        try {
+            Constructor<? extends TabulatedFunction> ctor = clazz.getConstructor(FunctionPoint[].class);
+            return ctor.newInstance((Object) points);
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static TabulatedFunction tabulate(Class<? extends TabulatedFunction> clazz, Function function, double leftX, double rightX, int pointsCount) {
+        if (leftX < function.getLeftDomainBorder() - EPS || rightX > function.getRightDomainBorder() + EPS)
+            throw new IllegalArgumentException("Границы табулирования выходят за область определения функции");
+        if (pointsCount < 2) throw new IllegalArgumentException("pointsCount < 2");
+
+        double step = (rightX - leftX) / (pointsCount - 1);
+        FunctionPoint[] pts = new FunctionPoint[pointsCount];
+        for (int i = 0; i < pointsCount; i++) {
+            double x = leftX + i * step;
+            pts[i] = new FunctionPoint(x, function.getFunctionValue(x));
+        }
+        return createTabulatedFunction(clazz, pts);
+    }
 
     public static TabulatedFunction tabulate(Function function, double leftX, double rightX, int pointsCount) {
         if (leftX < function.getLeftDomainBorder() - EPS || rightX > function.getRightDomainBorder() + EPS)
@@ -18,7 +80,7 @@ public final class TabulatedFunctions {
             double x = leftX + i * step;
             pts[i] = new FunctionPoint(x, function.getFunctionValue(x));
         }
-        return new ArrayTabulatedFunction(pts);
+        return createTabulatedFunction(pts);
     }
 
     public static void outputTabulatedFunction(TabulatedFunction function, OutputStream out) throws IOException {
@@ -43,7 +105,7 @@ public final class TabulatedFunctions {
             double y = dis.readDouble();
             pts[i] = new FunctionPoint(x, y);
         }
-        return new ArrayTabulatedFunction(pts);
+        return createTabulatedFunction(pts);
     }
 
     public static void writeTabulatedFunction(TabulatedFunction function, Writer out) throws IOException {
@@ -74,6 +136,6 @@ public final class TabulatedFunctions {
             double y = st.nval;
             pts[i] = new FunctionPoint(x, y);
         }
-        return new ArrayTabulatedFunction(pts);
+        return createTabulatedFunction(pts);
     }
 }

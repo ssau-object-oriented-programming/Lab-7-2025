@@ -6,42 +6,50 @@ public class Main {
     public static void main(String[] args) {
         Locale.setDefault(Locale.US);
         try {
-            
-            demoLab6();
+            demoLab7();
         } catch (Exception e) {
             System.out.println("Ошибка демонстрации lab5: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private static void demoLab6() {
-        System.out.println("\n=== Демонстрация лабораторной работы №6 ===");
-        
-        Function exp = new functions.basic.Exp();
-        double exact = Math.exp(1.0) - 1.0;
-        System.out.printf("Exact integral of exp on [0,1]: %.12f\n", exact);
+    private static void demoLab7() {
+        System.out.println("\n=== Демонстрация лабораторной работы №7 ===");
 
-        
-        double step = 0.5;
-        double value;
-        for (int iter = 0; iter < 60; iter++) {
-            value = Functions.integrate(exp, 0.0, 1.0, step);
-            double err = Math.abs(value - exact);
-            if (err < 5e-8) {
-                System.out.printf("Found step %.12g gives value %.12f (err=%.12g)\n", step, value, err);
-                break;
-            }
-            step /= 2.0;
+        Function f = new functions.basic.Cos();
+        TabulatedFunction tf;
+        tf = TabulatedFunctions.tabulate(f, 0, Math.PI, 11);
+        System.out.println(tf.getClass());
+        System.out.println("Iterating:");
+        for (FunctionPoint p : tf) {
+            System.out.println(p);
         }
 
-        
-        nonThread();
+        TabulatedFunctions.setTabulatedFunctionFactory(new LinkedListTabulatedFunction.LinkedListTabulatedFunctionFactory());
+        tf = TabulatedFunctions.tabulate(f, 0, Math.PI, 11);
+        System.out.println(tf.getClass());
 
-        
-        simpleThreads();
+        TabulatedFunctions.setTabulatedFunctionFactory(new ArrayTabulatedFunction.ArrayTabulatedFunctionFactory());
+        tf = TabulatedFunctions.tabulate(f, 0, Math.PI, 11);
+        System.out.println(tf.getClass());
 
-        
-        complicatedThreads();
+        TabulatedFunction t1 = TabulatedFunctions.createTabulatedFunction(ArrayTabulatedFunction.class, 0, 10, 3);
+        System.out.println(t1.getClass());
+        System.out.println(t1);
+
+        TabulatedFunction t2 = TabulatedFunctions.createTabulatedFunction(ArrayTabulatedFunction.class, 0, 10, new double[] {0, 10});
+        System.out.println(t2.getClass());
+        System.out.println(t2);
+
+        TabulatedFunction t3 = TabulatedFunctions.createTabulatedFunction(LinkedListTabulatedFunction.class, new FunctionPoint[] {
+            new FunctionPoint(0, 0), new FunctionPoint(10, 10)
+        });
+        System.out.println(t3.getClass());
+        System.out.println(t3);
+
+        TabulatedFunction t4 = TabulatedFunctions.tabulate(LinkedListTabulatedFunction.class, new functions.basic.Sin(), 0, Math.PI, 11);
+        System.out.println(t4.getClass());
+        System.out.println(t4);
     }
 
     private static void nonThread() {
@@ -64,47 +72,6 @@ public class Main {
                 res = Double.NaN;
             }
             System.out.printf("Result %.6f %.6f %.6f %.6f\n", left, right, step, res);
-        }
-    }
-
-    private static void simpleThreads() {
-        System.out.println("\n--- simpleThreads() ---");
-        Task task = new Task();
-        task.setCount(100);
-        Thread gen = new Thread(new SimpleGenerator(task));
-        Thread intg = new Thread(new SimpleIntegrator(task));
-        gen.start();
-        intg.start();
-        try {
-            gen.join();
-            intg.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    private static void complicatedThreads() {
-        System.out.println("\n--- complicatedThreads() ---");
-        Task task = new Task();
-        task.setCount(100);
-        SimpleSemaphore sem = new SimpleSemaphore();
-        Generator g = new Generator(task, sem);
-        Integrator it = new Integrator(task, sem);
-        g.start();
-        it.start();
-        
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        g.interrupt();
-        it.interrupt();
-        try {
-            g.join();
-            it.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
         }
     }
 
