@@ -177,14 +177,14 @@ public class TabulatedFunctions {
             double x = leftX + i * step; // вычисляем x координату
             vals[i] = function.getFunctionValue(x); // вычисляем значение функции в точке x
         }
-        return new ArrayTabulatedFunction(leftX, rightX, vals); // создаем табулированную функцию
+        return createTabulatedFunction(leftX, rightX, vals); // создаем табулированную функцию
     }
     public static void outputTabulatedFunction(TabulatedFunction function, OutputStream out) throws IOException, IllegalArgumentException{
         if (function == null) {
-            throw new IllegalArgumentException("функция не может быть null"); // проверяем что функция не null
+            throw new IllegalArgumentException("Function cannot be null"); // проверяем что функция не null
         }
         if (out == null) {
-            throw new IllegalArgumentException("выходной поток не может быть null"); // проверяем что поток не null
+            throw new IllegalArgumentException("OutputStream cannot be null"); // проверяем что поток не null
         }
 
         DataOutputStream dataOut = new DataOutputStream(out); // создаем поток для записи данных
@@ -207,7 +207,7 @@ public class TabulatedFunctions {
     }
     public static TabulatedFunction inputTabulatedFunction(InputStream in) throws IOException{
         if (in == null) {
-            throw new IllegalArgumentException("входной поток не может быть null"); // проверяем что поток не null
+            throw new IllegalArgumentException("Input stream cannot be null"); // проверяем что поток не null
         }
         DataInputStream dataIn = new DataInputStream(in); // создаем поток для чтения данных
 
@@ -225,11 +225,11 @@ public class TabulatedFunctions {
         }
 
         // используем конструктор с массивом точек
-        return new ArrayTabulatedFunction(points); // создаем табулированную функцию из массива точек
+        return createTabulatedFunction(points); // создаем табулированную функцию из массива точек
     }
     public static void writeTabulatedFunction(TabulatedFunction function, Writer out) throws IOException {
         if (function == null || out == null) {
-            throw new IllegalArgumentException("функция и поток не могут быть null"); // проверяем что функция и поток не null
+            throw new IllegalArgumentException("Function and Writer cannot be null"); // проверяем что функция и поток не null
         }
 
         PrintWriter writer = new PrintWriter(out); // создаем писатель для текстового вывода
@@ -252,7 +252,7 @@ public class TabulatedFunctions {
     public static TabulatedFunction readTabulatedFunction(Reader in) throws IOException {
 
         if (in == null) {
-            throw new IllegalArgumentException("поток не может быть null"); // проверяем что поток не null
+            throw new IllegalArgumentException("Reader cannot be null"); // проверяем что поток не null
         }
 
         StreamTokenizer tokenizer = new StreamTokenizer(in); // создаем токенизатор для чтения
@@ -260,7 +260,7 @@ public class TabulatedFunctions {
 
         // читаем количество точек
         if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
-            throw new IOException("ожидалось количество точек"); // проверяем что следующий токен число
+            throw new IOException("Expected number of points"); // проверяем что следующий токен число
         }
         int pointsCount = (int) tokenizer.nval; // получаем количество точек
 
@@ -269,18 +269,18 @@ public class TabulatedFunctions {
 
         for (int i = 0; i < pointsCount; i++) {
             if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
-                throw new IOException("ожидалась координата x"); // проверяем что следующий токен число
+                throw new IOException("Expected x coordinate"); // проверяем что следующий токен число
             }
             double x = tokenizer.nval; // получаем x координату
 
             if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
-                throw new IOException("ожидалась координата y"); // проверяем что следующий токен число
+                throw new IOException("Expected y coordinate"); // проверяем что следующий токен число
             }
             double y = tokenizer.nval; // получаем y координату
 
             points[i] = new FunctionPoint(x, y); // создаем новую точку
         }
 
-        return new ArrayTabulatedFunction(points); // создаем табулированную функцию из массива точек
+        return createTabulatedFunction(points); // создаем табулированную функцию из массива точек
     }
 }
