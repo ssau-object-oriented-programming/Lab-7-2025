@@ -3,6 +3,8 @@ package functions;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ArrayTabulatedFunction
         implements TabulatedFunction
@@ -448,6 +450,55 @@ public class ArrayTabulatedFunction
         catch(Exception e)
         {
             throw new RuntimeException("Ошибка копирования: " + e);
+        }
+    }
+
+    @Override
+    public Iterator<FunctionPoint> iterator()
+    {
+        return new Iterator<FunctionPoint>()
+        {
+            private int index;
+
+            @Override
+            public boolean hasNext()
+            {
+                return index < amountOfElements;
+            }
+
+            @Override
+            public FunctionPoint next()
+            {
+                if(!hasNext())
+                    throw new NoSuchElementException("Невозможно получить следующий элемент");
+
+                return points[index++];
+            }
+
+            @Override
+            public void remove()
+            {
+                throw new UnsupportedOperationException("Невозможно выполнить remove()");
+            }
+        };
+
+    }
+
+    public static class ArrayTabulatedFunctionFactory implements TabulatedFunctionFactory
+    {
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointCount) throws IllegalArgumentException {
+            return new ArrayTabulatedFunction(leftX, rightX, pointCount);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) throws IllegalArgumentException {
+            return new ArrayTabulatedFunction(leftX, rightX, values);
+        }
+
+        @Override
+        public TabulatedFunction createTabulatedFunction(FunctionPoint[] points) throws IllegalArgumentException {
+            return new ArrayTabulatedFunction(points);
         }
     }
 }

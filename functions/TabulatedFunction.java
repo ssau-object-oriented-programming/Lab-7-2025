@@ -6,7 +6,7 @@ import java.util.Objects;
 
 
 public interface TabulatedFunction
-        extends Function, Serializable, Externalizable
+        extends Function, Serializable, Externalizable, Iterable<FunctionPoint>
 {
     /**
      * Возвращает общее количество точек в таблице функции

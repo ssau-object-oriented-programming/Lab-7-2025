@@ -3,6 +3,8 @@
     import java.io.IOException;
     import java.io.ObjectInput;
     import java.io.ObjectOutput;
+    import java.util.Iterator;
+    import java.util.NoSuchElementException;
     import java.util.Objects;
 
     public class LinkedListTabulatedFunction
@@ -606,4 +608,56 @@
                 throw new RuntimeException("Ошибка клонирования", e);
             }
         }
+
+        @Override
+        public Iterator<FunctionPoint> iterator()
+        {
+            return new Iterator<FunctionPoint>()
+            {
+                private FunctionNode currentNode = head.next;
+
+                @Override
+                public boolean hasNext()
+                {
+                    return currentNode != head;
+                }
+
+                @Override
+                public FunctionPoint next()
+                {
+                    if(!hasNext())
+                        throw new NoSuchElementException("Невозможно получить следующий элемент");
+
+                    FunctionNode returnableNode = currentNode;
+                    currentNode = currentNode.next;
+
+                    return returnableNode.point;
+                }
+
+                @Override
+                public void remove()
+                {
+                    throw new UnsupportedOperationException("Невозможно выполнить remove()");
+                }
+            };
+        }
+
+        public static class LinkedListTabulatedFunctionFactory implements TabulatedFunctionFactory
+        {
+            @Override
+            public TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointCount) throws IllegalArgumentException {
+                return new LinkedListTabulatedFunction(leftX, rightX, pointCount);
+            }
+
+            @Override
+            public TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) throws IllegalArgumentException {
+                return new LinkedListTabulatedFunction(leftX, rightX, values);
+            }
+
+            @Override
+            public TabulatedFunction createTabulatedFunction(FunctionPoint[] points) throws IllegalArgumentException {
+                return new LinkedListTabulatedFunction(points);
+            }
+        }
+
     }
