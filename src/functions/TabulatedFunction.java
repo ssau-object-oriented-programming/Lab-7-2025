@@ -1,9 +1,7 @@
 package functions;
 
-// 1. Добавляем extends Cloneable
-public interface TabulatedFunction extends Function, java.io.Serializable, Cloneable {
-    
-    // ... (все старые методы)
+// Наследуемся от Iterable<FunctionPoint>, чтобы можно было использовать в цикле for-each
+public interface TabulatedFunction extends Function, Cloneable, java.io.Serializable, Iterable<FunctionPoint> {
     int getPointsCount();
     FunctionPoint getPoint(int index);
     void setPoint(int index, FunctionPoint point) throws InappropriateFunctionPointException;
@@ -13,7 +11,6 @@ public interface TabulatedFunction extends Function, java.io.Serializable, Clone
     void setPointY(int index, double y);
     void deletePoint(int index);
     void addPoint(FunctionPoint point) throws InappropriateFunctionPointException;
-
-    // 2. Добавляем объявление метода clone()
+    
     Object clone() throws CloneNotSupportedException;
 }

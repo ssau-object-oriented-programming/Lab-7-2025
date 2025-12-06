@@ -1,12 +1,16 @@
 package functions;
 
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ArrayTabulatedFunction implements TabulatedFunction {
-    private FunctionPoint[] points;
+    private FunctionPoint[] points; // Массив точек
     private static final long serialVersionUID = 1L; 
 
     // --- Конструкторы ---
+
+    // Конструктор по границам и количеству точек
     public ArrayTabulatedFunction(double leftX, double rightX, int pointsCount) {
         if (leftX >= rightX || pointsCount < 2) {
             throw new IllegalArgumentException("Invalid arguments: leftX >= rightX or pointsCount < 2");
@@ -18,6 +22,7 @@ public class ArrayTabulatedFunction implements TabulatedFunction {
         }
     }
     
+    // Конструктор по границам и значениям Y
     public ArrayTabulatedFunction(double leftX, double rightX, double[] values) {
         int count = values.length;
         if (leftX >= rightX || count < 2) {
@@ -30,6 +35,7 @@ public class ArrayTabulatedFunction implements TabulatedFunction {
         }
     }
     
+    // Конструктор по готовым точкам
     public ArrayTabulatedFunction(FunctionPoint[] points) {
         if (points.length < 2) {
             throw new IllegalArgumentException("Function must have at least 2 points");
@@ -46,7 +52,7 @@ public class ArrayTabulatedFunction implements TabulatedFunction {
     }
 
     // --- Основные методы ---
-    
+
     public double getLeftDomainBorder() {
         return points[0].getX();
     }
@@ -55,42 +61,28 @@ public class ArrayTabulatedFunction implements TabulatedFunction {
         return points[points.length - 1].getX();
     }
 
-    // --- ИСПРАВЛЕННЫЙ МЕТОД (Задание 2) ---
+    // Вычисление значения (интерполяция)
     public double getFunctionValue(double x) {
         if (x < getLeftDomainBorder() || x > getRightDomainBorder()) {
             return Double.NaN;
         }
-        
-        // Проходим по всем интервалам
         for (int i = 0; i < points.length - 1; ++i) {
             double x1 = points[i].getX();
             double x2 = points[i + 1].getX();
             double y1 = points[i].getY();
             double y2 = points[i + 1].getY();
 
-            // Если x находится внутри текущего интервала
             if (x >= x1 && x <= x2) {
-                double epsilon = 1e-9; // Машинный эпсилон
-
-                // Проверка точного совпадения с левой границей интервала
-                if (Math.abs(x - x1) < epsilon) {
-                    return y1;
-                }
-                // Проверка точного совпадения с правой границей интервала
-                if (Math.abs(x - x2) < epsilon) {
-                    return y2;
-                }
-
-                // Если совпадения нет, выполняем интерполяцию
+                double epsilon = 1e-9;
+                if (Math.abs(x - x1) < epsilon) return y1;
+                if (Math.abs(x - x2) < epsilon) return y2;
                 return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
             }
         }
         return Double.NaN;
     }
 
-    public int getPointsCount() {
-        return points.length;
-    }
+    public int getPointsCount() { return points.length; }
 
     private void checkIndex(int index) {
         if (index < 0 || index >= points.length) {
@@ -157,11 +149,9 @@ public class ArrayTabulatedFunction implements TabulatedFunction {
         while (insertIndex < points.length && points[insertIndex].getX() < point.getX()) {
             insertIndex++;
         }
-        
         if (insertIndex < points.length && points[insertIndex].getX() == point.getX()) {
             throw new InappropriateFunctionPointException("Point with X=" + point.getX() + " already exists.");
         }
-        
         FunctionPoint[] newPoints = new FunctionPoint[points.length + 1];
         System.arraycopy(points, 0, newPoints, 0, insertIndex);
         newPoints[insertIndex] = new FunctionPoint(point);
@@ -187,24 +177,18 @@ public class ArrayTabulatedFunction implements TabulatedFunction {
         if (!(o instanceof TabulatedFunction)) return false; 
         
         TabulatedFunction that = (TabulatedFunction) o;
-
         if (this.getPointsCount() != that.getPointsCount()) return false;
 
         if (o instanceof ArrayTabulatedFunction) {
             ArrayTabulatedFunction thatArray = (ArrayTabulatedFunction) o;
             for (int i = 0; i < this.points.length; i++) {
-                if (!this.points[i].equals(thatArray.points[i])) {
-                    return false;
-                }
+                if (!this.points[i].equals(thatArray.points[i])) return false;
             }
         } else {
             for (int i = 0; i < this.getPointsCount(); i++) {
-                if (!this.getPoint(i).equals(that.getPoint(i))) {
-                    return false;
-                }
+                if (!this.getPoint(i).equals(that.getPoint(i))) return false;
             }
         }
-        
         return true;
     }
 
@@ -220,5 +204,42 @@ public class ArrayTabulatedFunction implements TabulatedFunction {
             clonedPoints[i] = (FunctionPoint) this.points[i].clone();
         }
         return new ArrayTabulatedFunction(clonedPoints);
+    }
+
+    // ЗАДАНИЕ 1 - Итератор
+    public Iterator<FunctionPoint> iterator() {
+        return new Iterator<FunctionPoint>() {
+            private int index = 0;
+
+            public boolean hasNext() {
+                return index < points.length;
+            }
+
+            public FunctionPoint next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return new FunctionPoint(points[index++]);
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    // ЗАДАНИЕ 2 - Фабрика
+    public static class ArrayTabulatedFunctionFactory implements TabulatedFunctionFactory {
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
+            return new ArrayTabulatedFunction(leftX, rightX, pointsCount);
+        }
+
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) {
+            return new ArrayTabulatedFunction(leftX, rightX, values);
+        }
+
+        public TabulatedFunction createTabulatedFunction(FunctionPoint[] points) {
+            return new ArrayTabulatedFunction(points);
+        }
     }
 }

@@ -4,6 +4,8 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class LinkedListTabulatedFunction implements TabulatedFunction, Externalizable {
 
@@ -11,6 +13,8 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
         FunctionPoint point;
         FunctionNode prev;
         FunctionNode next;
+        
+        FunctionNode() {}
     }
 
     private FunctionNode head;
@@ -18,6 +22,7 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
     private static final long serialVersionUID = 1L;
 
     // --- Конструкторы ---
+
     public LinkedListTabulatedFunction() {
         this.count = 0;
         this.head = new FunctionNode();
@@ -78,9 +83,8 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
         }
     }
 
-
     // --- Внутренние методы ---
-    
+
     private FunctionNode getNodeByIndex(int index) {
         if (index < 0 || index >= count) {
             throw new FunctionPointIndexOutOfBoundsException("Index " + index + " is out of bounds");
@@ -118,16 +122,10 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
     }
     
     // --- Основные методы ---
-    
-    public double getLeftDomainBorder() {
-        return head.next.point.getX();
-    }
 
-    public double getRightDomainBorder() {
-        return head.prev.point.getX();
-    }
+    public double getLeftDomainBorder() { return head.next.point.getX(); }
+    public double getRightDomainBorder() { return head.prev.point.getX(); }
 
-    // --- ИСПРАВЛЕННЫЙ МЕТОД (Задание 2) ---
     public double getFunctionValue(double x) {
         if (x < getLeftDomainBorder() || x > getRightDomainBorder() || count == 0) {
             return Double.NaN;
@@ -135,26 +133,15 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
 
         FunctionNode current = head.next;
         while (current != head) {
-            double epsilon = 1e-9; // Машинный эпсилон
-
-            // Проверка: если x совпадает с точкой текущего узла
+            double epsilon = 1e-9;
             if (Math.abs(current.point.getX() - x) < epsilon) {
                 return current.point.getY();
             }
-
-            // Проверяем интервал между текущим и следующим узлом
             if (current.next != head) {
                 double x1 = current.point.getX();
                 double x2 = current.next.point.getX();
-                
-                // Если x строго внутри интервала
                 if (x > x1 && x < x2) {
-                    // Проверяем правую границу на всякий случай, чтобы избежать интерполяции при x ~= x2
-                    if (Math.abs(x2 - x) < epsilon) {
-                        return current.next.point.getY();
-                    }
-                    
-                    // Если точного совпадения нет, делаем интерполяцию
+                    if (Math.abs(x2 - x) < epsilon) return current.next.point.getY();
                     double y1 = current.point.getY();
                     double y2 = current.next.point.getY();
                     return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
@@ -165,9 +152,7 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
         return Double.NaN;
     }
 
-    public int getPointsCount() {
-        return count;
-    }
+    public int getPointsCount() { return count; }
 
     private void checkIndex(int index) {
         if (index < 0 || index >= count) {
@@ -239,7 +224,6 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
         addNode(current).point = new FunctionPoint(point);
     }
 
-    // --- Методы Externalizable ---
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(count);
         FunctionNode current = head.next;
@@ -265,9 +249,6 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
         }
     }
 
-
-    // --- НОВЫЕ МЕТОДЫ ---
-
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
@@ -288,29 +269,22 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
         if (!(o instanceof TabulatedFunction)) return false;
         
         TabulatedFunction that = (TabulatedFunction) o;
-
         if (this.getPointsCount() != that.getPointsCount()) return false;
 
         if (o instanceof LinkedListTabulatedFunction) {
             LinkedListTabulatedFunction thatList = (LinkedListTabulatedFunction) o;
             FunctionNode thisCurrent = this.head.next;
             FunctionNode thatCurrent = thatList.head.next;
-            
             while (thisCurrent != this.head) {
-                if (!thisCurrent.point.equals(thatCurrent.point)) {
-                    return false;
-                }
+                if (!thisCurrent.point.equals(thatCurrent.point)) return false;
                 thisCurrent = thisCurrent.next;
                 thatCurrent = thatCurrent.next;
             }
         } else {
             for (int i = 0; i < this.getPointsCount(); i++) {
-                if (!this.getPoint(i).equals(that.getPoint(i))) {
-                    return false;
-                }
+                if (!this.getPoint(i).equals(that.getPoint(i))) return false;
             }
         }
-        
         return true;
     }
 
@@ -333,5 +307,44 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Externali
             current = current.next;
         }
         return new LinkedListTabulatedFunction(clonedPoints);
+    }
+
+    // ЗАДАНИЕ 1 - Итератор
+    public Iterator<FunctionPoint> iterator() {
+        return new Iterator<FunctionPoint>() {
+            private FunctionNode node = head.next;
+
+            public boolean hasNext() {
+                return node != head;
+            }
+
+            public FunctionPoint next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                FunctionPoint point = new FunctionPoint(node.point);
+                node = node.next;
+                return point;
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    // ЗАДАНИЕ 2 - Фабрика
+    public static class LinkedListTabulatedFunctionFactory implements TabulatedFunctionFactory {
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, int pointsCount) {
+            return new LinkedListTabulatedFunction(leftX, rightX, pointsCount);
+        }
+
+        public TabulatedFunction createTabulatedFunction(double leftX, double rightX, double[] values) {
+            return new LinkedListTabulatedFunction(leftX, rightX, values);
+        }
+
+        public TabulatedFunction createTabulatedFunction(FunctionPoint[] points) {
+            return new LinkedListTabulatedFunction(points);
+        }
     }
 }
