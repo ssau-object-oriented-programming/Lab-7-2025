@@ -11,7 +11,7 @@ public class TabulatedFunctions {
 
     private TabulatedFunctions() {}
 
-    // --- Методы работы с фабрикой (из Шага 2) ---
+    // Методы работы с фабрикой
 
     // Установка новой фабрики
     public static void setTabulatedFunctionFactory(TabulatedFunctionFactory newFactory) {
@@ -52,7 +52,7 @@ public class TabulatedFunctions {
         return createTabulatedFunction(points);
     }
 
-    // --- ЗАДАНИЕ 3: Методы с использованием REFLECTION ---
+    // ЗАДАНИЕ 3 - Методы с использованием reflection
 
     // Создание функции указанного класса (границы и количество)
     public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> clazz, double leftX, double rightX, int pointsCount) {
@@ -110,7 +110,7 @@ public class TabulatedFunctions {
         return createTabulatedFunction(clazz, points);
     }
 
-    // --- Методы ввода/вывода (остаются прежними) ---
+    // Методы ввода/вывода (через Фабрику)
 
     public static void outputTabulatedFunction(TabulatedFunction function, OutputStream out) throws IOException {
         DataOutputStream dos = new DataOutputStream(out);
@@ -155,5 +155,37 @@ public class TabulatedFunctions {
             points[i] = new FunctionPoint(x, y);
         }
         return createTabulatedFunction(points);
+    }
+
+    // добавленные новые методы - ввод/вывод с рефлексией
+
+    // Считывание из байтового потока с указанием класса
+    public static TabulatedFunction inputTabulatedFunction(Class<? extends TabulatedFunction> clazz, InputStream in) throws IOException {
+        DataInputStream dis = new DataInputStream(in);
+        int count = dis.readInt();
+        FunctionPoint[] points = new FunctionPoint[count];
+        for (int i = 0; i < count; i++) {
+            points[i] = new FunctionPoint(dis.readDouble(), dis.readDouble());
+        }
+        // Используем рефлексию для создания объекта
+        return createTabulatedFunction(clazz, points);
+    }
+
+    // Считывание из символьного потока с указанием класса
+    public static TabulatedFunction readTabulatedFunction(Class<? extends TabulatedFunction> clazz, Reader in) throws IOException {
+        StreamTokenizer tokenizer = new StreamTokenizer(in);
+        tokenizer.nextToken();
+        int count = (int) tokenizer.nval;
+
+        FunctionPoint[] points = new FunctionPoint[count];
+        for (int i = 0; i < count; i++) {
+            tokenizer.nextToken();
+            double x = tokenizer.nval;
+            tokenizer.nextToken();
+            double y = tokenizer.nval;
+            points[i] = new FunctionPoint(x, y);
+        }
+        // Используем рефлексию для создания объекта
+        return createTabulatedFunction(clazz, points);
     }
 }
