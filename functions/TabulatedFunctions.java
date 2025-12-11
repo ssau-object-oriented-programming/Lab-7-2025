@@ -124,7 +124,21 @@ public final class TabulatedFunctions {
         // Возвращаем табулированную функцию
         return new ArrayTabulatedFunction(points);
     }
+    
+    public static TabulatedFunction inputTabulatedFunction(Class<? extends TabulatedFunction> clazz, InputStream inputStream) throws IOException {
+        DataInputStream in = new DataInputStream(inputStream);
 
+        int pointsCount = in.readInt();
+
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+        for (int i = 0; i < pointsCount; i++) {
+            double x = in.readDouble();
+            double y = in.readDouble();
+            points[i] = new FunctionPoint(x, y);
+        }
+
+        return createTabulatedFunction(clazz, points);
+    }
 
     // Записывает табулированную функцию в символьный поток
     public static void writeTabulatedFunction(TabulatedFunction function, Writer writer) {
@@ -173,7 +187,28 @@ public final class TabulatedFunctions {
         // Возвращаем табулированную функцию
         return new ArrayTabulatedFunction(points);
     }
+    
+public static TabulatedFunction readTabulatedFunction(Class<? extends TabulatedFunction> clazz, Reader reader) throws IOException {
+        StreamTokenizer tokenizer = new StreamTokenizer(reader);
+        tokenizer.parseNumbers();
 
+        tokenizer.nextToken();
+        int pointsCount = (int) tokenizer.nval;
+
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+        for (int i = 0; i < pointsCount; i++) {
+            tokenizer.nextToken();
+            double x = tokenizer.nval;
+
+            tokenizer.nextToken();
+            double y = tokenizer.nval;
+
+            points[i] = new FunctionPoint(x, y);
+        }
+
+        return createTabulatedFunction(clazz, points);
+    }
+    
     //Сериализует (сохраняет) табулированную функцию в байтовый поток
     public static void serialize(TabulatedFunction function, OutputStream outputStream) throws IOException {
         // ObjectOutputStream записывает объект в бинарном виде
@@ -248,4 +283,5 @@ public final class TabulatedFunctions {
         // Вызываем рефлексивный метод создания
         return createTabulatedFunction(clazz, points);
     }
+
 }
