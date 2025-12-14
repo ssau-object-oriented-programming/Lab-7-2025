@@ -1,6 +1,7 @@
 package functions;
 
 import java.io.*;
+import java.lang.reflect.*;
 
 public class TabulatedFunctions {
     private static TabulatedFunctionFactory factory = new ArrayTabulatedFunction.ArrayTabulatedFunctionFactory();
@@ -33,11 +34,11 @@ public class TabulatedFunctions {
                                                             double leftX, double rightX, int pointsCount) {
         try {
             // получаем конструктор с нужными параметрами
-            java.lang.reflect.Constructor<? extends TabulatedFunction> constructor =
+            Constructor<? extends TabulatedFunction> constructor =
                     functionClass.getConstructor(double.class, double.class, int.class);
             // создаем объект
             return constructor.newInstance(leftX, rightX, pointsCount);
-        } catch (java.lang.reflect.InvocationTargetException e) {
+        } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             if (cause instanceof RuntimeException) {
                 throw (RuntimeException) cause;
@@ -53,11 +54,11 @@ public class TabulatedFunctions {
                                                             double leftX, double rightX, double[] values) {
         try {
             // получаем конструктор с нужными параметрами
-            java.lang.reflect.Constructor<? extends TabulatedFunction> constructor =
+            Constructor<? extends TabulatedFunction> constructor =
                     functionClass.getConstructor(double.class, double.class, double[].class);
             // создаем объект
             return constructor.newInstance(leftX, rightX, values);
-        } catch (java.lang.reflect.InvocationTargetException e) {
+        } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             if (cause instanceof RuntimeException) {
                 throw (RuntimeException) cause;
@@ -73,11 +74,11 @@ public class TabulatedFunctions {
                                                             FunctionPoint[] points) {
         try {
             // получаем конструктор с нужными параметрами
-            java.lang.reflect.Constructor<? extends TabulatedFunction> constructor =
+            Constructor<? extends TabulatedFunction> constructor =
                     functionClass.getConstructor(FunctionPoint[].class);
             // создаем объект
             return constructor.newInstance((Object) points);
-        } catch (java.lang.reflect.InvocationTargetException e) {
+        } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             if (cause instanceof RuntimeException) {
                 throw (RuntimeException) cause;
@@ -167,7 +168,7 @@ public class TabulatedFunctions {
         dataOut.flush();
     }
 
-    // ввод табулированной ф-ции из байтового потока
+    // ввод табулированной ф-ции из байтового потока (фабрика)
     public static TabulatedFunction inputTabulatedFunction(InputStream in) throws IOException {
         DataInputStream dataIn = new DataInputStream(in);
 
@@ -184,6 +185,26 @@ public class TabulatedFunctions {
 
         // используем фабрику для создания табулированной ф-ции
         return createTabulatedFunction(points);
+    }
+
+    // ввод табулированной ф-ции из байтового потока (рефлексия)
+    public static TabulatedFunction inputTabulatedFunction(Class<? extends TabulatedFunction> functionClass,
+                                                           InputStream in) throws IOException {
+        DataInputStream dataIn = new DataInputStream(in);
+
+        // читаем кол-во точек
+        int pointsCount = dataIn.readInt();
+
+        // читаем координаты точек
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+        for (int i = 0; i < pointsCount; i++) {
+            double x = dataIn.readDouble();
+            double y = dataIn.readDouble();
+            points[i] = new FunctionPoint(x, y);
+        }
+
+        // используем рефлексию для создания табулированной ф-ции
+        return createTabulatedFunction(functionClass, points);
     }
 
     // запись ф-ции в символьный поток
@@ -206,7 +227,7 @@ public class TabulatedFunctions {
         writer.flush();
     }
 
-    // считывание ф-ции из символьного потока
+    // считывание ф-ции из символьного потока (фабрика)
     public static TabulatedFunction readTabulatedFunction(Reader in) throws IOException {
         if (in == null) {
             throw new IllegalArgumentException("передан нулевой поток ввода");
@@ -247,5 +268,49 @@ public class TabulatedFunctions {
 
         // используем фабрику для создания табулированной ф-ции
         return createTabulatedFunction(functionPoints);
+    }
+
+    // считывание ф-ции из символьного потока (рефлексия)
+    public static TabulatedFunction readTabulatedFunction(Class<? extends TabulatedFunction> functionClass,
+                                                          Reader in) throws IOException {
+        if (in == null) {
+            throw new IllegalArgumentException("передан нулевой поток ввода");
+        }
+
+        StreamTokenizer tokenizer = new StreamTokenizer(in);
+        tokenizer.parseNumbers();
+
+        // считываем число точек
+        int tokenType = tokenizer.nextToken();
+        if (tokenType != StreamTokenizer.TT_NUMBER) {
+            throw new IOException("не найдено количество точек");
+        }
+        int count = (int) tokenizer.nval;
+
+        // создаем массив для хранения точек
+        FunctionPoint[] functionPoints = new FunctionPoint[count];
+
+        // считываем пары
+        for (int i = 0; i < count; i++) {
+            // считываем x координату
+            tokenType = tokenizer.nextToken();
+            if (tokenType != StreamTokenizer.TT_NUMBER) {
+                throw new IOException("отсутствует x координата для точки " + i);
+            }
+            double xCoord = tokenizer.nval;
+
+            // считываем y координату
+            tokenType = tokenizer.nextToken();
+            if (tokenType != StreamTokenizer.TT_NUMBER) {
+                throw new IOException("отсутствует y координата для точки " + i);
+            }
+            double yCoord = tokenizer.nval;
+
+            // создаем точку с полученными координатами
+            functionPoints[i] = new FunctionPoint(xCoord, yCoord);
+        }
+
+        // используем рефлексию для создания табулированной ф-ции
+        return createTabulatedFunction(functionClass, functionPoints);
     }
 }
