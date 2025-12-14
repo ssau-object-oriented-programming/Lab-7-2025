@@ -122,7 +122,48 @@ public class Main {
         f1 = TabulatedFunctions.tabulate(new Sin(), 0, Math.PI, 11);
         System.out.println("\n4. tabulate с Sin (через фабрику): " + f1.getClass().getSimpleName());
         System.out.println("   " + f1);
+
+        System.out.println("\nТест перегруженных методов с рефлексией");
+        
+        // Тест 1: tabulate с явным указанием класса
+        System.out.println("1. Тест tabulate с рефлексией:");
+        TabulatedFunction tf1 = TabulatedFunctions.tabulate(new Cos(), 0, Math.PI, 5, ArrayTabulatedFunction.class);
+        System.out.println("Создана функция типа: " + tf1.getClass().getSimpleName());
+        
+        TabulatedFunction tf2 = TabulatedFunctions.tabulate(new Cos(), 0, Math.PI, 5, LinkedListTabulatedFunction.class);
+        System.out.println("Создана функция типа: " + tf2.getClass().getSimpleName());
+        
+        // Тест 2: Чтение из байтового потока с указанием класса
+        System.out.println("\n2. Тест inputTabulatedFunction с рефлексией:");
+        try {
+            // Создаем тестовую функцию и сериализуем
+            TabulatedFunction original = TabulatedFunctions.createTabulatedFunction( ArrayTabulatedFunction.class, 1, 5, new double[]{1, 4, 9, 16, 25});
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            TabulatedFunctions.outputTabulatedFunction(original, baos);
+            byte[] bytes = baos.toByteArray();
+            
+            // Читаем как LinkedList функцию
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            TabulatedFunction readAsLinkedList = TabulatedFunctions.inputTabulatedFunction(bais, LinkedListTabulatedFunction.class);
+            System.out.println("Функция прочитана как: " + readAsLinkedList.getClass().getSimpleName());
+            
+        } catch (IOException ex)
+         { 
+            ex.printStackTrace();
+        }
+        
+        // Тест 3: Чтение из текстового потока с указанием класса
+        System.out.println("\n3. Тест readTabulatedFunction с рефлексией:");
+        try {
+            String textData = "3\n0.0\n0.0\n2.0\n4.0\n4.0\n16.0\n";
+            StringReader reader = new StringReader(textData);
+            
+            TabulatedFunction textFunc = TabulatedFunctions.readTabulatedFunction(reader, ArrayTabulatedFunction.class);
+            System.out.println("Из текста создана: " + textFunc.getClass().getSimpleName());
+            
+        } catch (IOException ex) { // Изменил имя переменной с e на ex
+            ex.printStackTrace();
+        }
     }
 }
-    
     

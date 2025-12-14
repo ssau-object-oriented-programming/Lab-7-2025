@@ -48,10 +48,33 @@ public final class TabulatedFunctions {
         }
         return createTabulatedFunction(points);
     }
+
+ // Tabulate через рефлексию с указанием класса
+    public static TabulatedFunction tabulate(Function function, double leftX, double rightX, int pointsCount, Class<? extends TabulatedFunction> functionClass) 
+    {
+        if (leftX < function.getLeftDomainBorder() || rightX > function.getRightDomainBorder()) {
+            throw new IllegalArgumentException("Заданный интервал выходит за границы области определения функции");
+        }
+        
+        if (pointsCount < 2) {
+            throw new IllegalArgumentException("Количество точек должно быть не менее 2");
+        }
+        
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+        double step = (rightX - leftX) / (pointsCount - 1);
+        
+        for (int i = 0; i < pointsCount; i++) {
+            double x = leftX + i * step;
+            double y = function.getFunctionValue(x);
+            points[i] = new FunctionPoint(x, y);
+        }
+        
+        // Используем рефлексивный метод для создания функции
+        return createTabulatedFunction(functionClass, points);
+    }
+
     // Метод создания функции через рефлексию с тремя параметрами
-    public static TabulatedFunction createTabulatedFunction(
-            Class<? extends TabulatedFunction> functionClass,
-            double leftX, double rightX, int pointsCount) {
+    public static TabulatedFunction createTabulatedFunction(Class<? extends TabulatedFunction> functionClass,double leftX, double rightX, int pointsCount) {
         
         try {
             // Получаем конструктор с параметрами (double, double, int)
@@ -72,9 +95,8 @@ public final class TabulatedFunctions {
     }
     
     // Метод создания функции через рефлексию с массивом значений
-    public static TabulatedFunction createTabulatedFunction(
-            Class<? extends TabulatedFunction> functionClass,
-            double leftX, double rightX, double[] values) {
+    public static TabulatedFunction createTabulatedFunction( Class<? extends TabulatedFunction> functionClass, double leftX, double rightX, double[] values) 
+    {
         
         try {
             // Получаем конструктор с параметрами (double, double, double[])
@@ -95,9 +117,7 @@ public final class TabulatedFunctions {
     }
     
     // Метод создания функции через рефлексию с массивом точек
-    public static TabulatedFunction createTabulatedFunction(
-            Class<? extends TabulatedFunction> functionClass,
-            FunctionPoint[] array) {
+    public static TabulatedFunction createTabulatedFunction( Class<? extends TabulatedFunction> functionClass, FunctionPoint[] array) {
         
         try {
             // Получаем конструктор с параметрами (FunctionPoint[])
@@ -171,4 +191,39 @@ public final class TabulatedFunctions {
         }
         return createTabulatedFunction(data);
     }
+
+    public static TabulatedFunction inputTabulatedFunction(InputStream in, Class<? extends TabulatedFunction> functionClass) throws IOException {
+        DataInputStream dataIn = new DataInputStream(in);
+        int pointCount = dataIn.readInt();
+        FunctionPoint[] data = new FunctionPoint[pointCount];
+        
+        for (int i = 0; i < pointCount; i++) {
+            double x = dataIn.readDouble();
+            double y = dataIn.readDouble();
+            data[i] = new FunctionPoint(x, y);
+        }
+        
+        // Используем рефлексивный метод для создания функции
+        return createTabulatedFunction(functionClass, data);
+    }
+
+    // Добавить этот перегруженный метод readTabulatedFunction с рефлексией
+    public static TabulatedFunction readTabulatedFunction(Reader in, Class<? extends TabulatedFunction> functionClass) throws IOException {
+        StreamTokenizer st = new StreamTokenizer(in);
+        st.nextToken();
+        int itemsCount = (int) st.nval;
+        FunctionPoint[] data = new FunctionPoint[itemsCount];
+        
+        for (int i = 0; i < itemsCount; i++) {
+            st.nextToken();
+            double x = st.nval;
+            st.nextToken();
+            double y = st.nval;
+            data[i] = new FunctionPoint(x, y);
+        }
+        
+        // Используем рефлексивный метод для создания функции
+        return createTabulatedFunction(functionClass, data);
+    }
+
 }
