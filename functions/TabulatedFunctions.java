@@ -4,6 +4,7 @@ import java.io.*;
 import java.lang.reflect.Constructor;
 
 
+
 public class TabulatedFunctions {
 
     private static TabulatedFunctionFactory factory = 
@@ -29,7 +30,7 @@ public class TabulatedFunctions {
         return factory.createTabulatedFunction(points);
     }
 
-     private TabulatedFunctions() {
+    private TabulatedFunctions() {
         throw new UnsupportedOperationException("Класс TabulatedFunctions не может быть инстанцирован");
     }
 
@@ -153,21 +154,33 @@ public class TabulatedFunctions {
         dataOut.flush();
     }
 
+    // Обычный метод (с фабрикой)
     public static TabulatedFunction inputTabulatedFunction(InputStream in) throws IOException {
         DataInputStream dataIn = new DataInputStream(in);
         int pointsCount = dataIn.readInt();
-            
-            // Читаем координаты точек
-            FunctionPoint[] points = new FunctionPoint[pointsCount];
-            for (int i = 0; i < pointsCount; i++) {
-                double x = dataIn.readDouble();
-                double y = dataIn.readDouble();
-                points[i] = new FunctionPoint(x, y);
-            }
-            
-            return new ArrayTabulatedFunction(points);
-            
-    } 
+        
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+        for (int i = 0; i < pointsCount; i++) {
+            points[i] = new FunctionPoint(dataIn.readDouble(), dataIn.readDouble());
+        }
+        
+        return factory.createTabulatedFunction(points);
+    }
+
+    // Метод с рефлексией
+    public static TabulatedFunction inputTabulatedFunction(InputStream in,
+            Class<? extends TabulatedFunction> clazz) throws IOException {
+        DataInputStream dataIn = new DataInputStream(in);
+        int pointsCount = dataIn.readInt();
+        
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+        for (int i = 0; i < pointsCount; i++) {
+            points[i] = new FunctionPoint(dataIn.readDouble(), dataIn.readDouble());
+        }
+        
+        return createTabulatedFunction(clazz, points);
+    }
+
 
     public static void writeTabulatedFunction(TabulatedFunction function, Writer out) throws IOException {
         PrintWriter writer = new PrintWriter(out);
@@ -184,6 +197,7 @@ public class TabulatedFunctions {
         // НЕ закрываем поток - это ответственность вызывающего кода
     }
 
+    // Обычный метод (с фабрикой)
     public static TabulatedFunction readTabulatedFunction(Reader in) throws IOException {
         // Используем StreamTokenizer для разбора чисел
         StreamTokenizer tokenizer = new StreamTokenizer(in);
@@ -228,7 +242,51 @@ public class TabulatedFunctions {
             points[i] = new FunctionPoint(x, y);
             }
             
-            return new ArrayTabulatedFunction(points);
+            return factory.createTabulatedFunction(points);
+    }
+
+    // Метод с рефлексией (добавляем недостающий)
+    public static TabulatedFunction readTabulatedFunction(Reader in,
+            Class<? extends TabulatedFunction> clazz) throws IOException {
+        StreamTokenizer tokenizer = new StreamTokenizer(in);
+        
+        tokenizer.resetSyntax();
+        tokenizer.parseNumbers();
+        tokenizer.whitespaceChars(' ', ' ');
+        tokenizer.whitespaceChars('\t', '\t');
+        tokenizer.whitespaceChars('\n', '\n');
+        tokenizer.whitespaceChars('\r', '\r');
+        tokenizer.wordChars('0', '9');
+        tokenizer.wordChars('.', '.');
+        tokenizer.wordChars('-', '-');
+        tokenizer.wordChars('E', 'E');
+        tokenizer.wordChars('e', 'e');
+        
+        if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
+            throw new IOException("Ожидалось количество точек");
+        }
+        int pointsCount = (int) tokenizer.nval;
+
+        if (pointsCount < 2) {
+            throw new IOException("Количество точек должно быть не менее 2");
+        }
+        
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+        for (int i = 0; i < pointsCount; i++) {
+            if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
+                throw new IOException("Ожидалась координата x точки " + i);
+            }
+            double x = tokenizer.nval;
+            
+            if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
+                throw new IOException("Ожидалась координата y точки " + i);
+            }
+            double y = tokenizer.nval;
+            
+            points[i] = new FunctionPoint(x, y);
+        }
+        
+        return createTabulatedFunction(clazz, points);
     }
 
 }
