@@ -9,8 +9,15 @@ import functions.Function;
 
 public class Main {
     public static void main(String[] args){
-    //     TabulatedFunction f = new LinkedListTabulatedFunction(1, 3, 5);
-    //     for (FunctionPoint p : f){
+
+
+    //     TabulatedFunction f1 = new LinkedListTabulatedFunction(1, 3, 5);
+    //     for (FunctionPoint p : f1) {
+    //         System.out.println(p);
+    //     }
+
+    //     TabulatedFunction f2 = new ArrayTabulatedFunction(1, 3, 5);
+    //     for (FunctionPoint p : f2){
     //         System.out.println(p);
     //    }
 
@@ -27,30 +34,30 @@ public class Main {
         // tf = TabulatedFunctions.tabulate(f, 0, Math.PI, 11);
         // System.out.println(tf.getClass());
 
-        TabulatedFunction f;
+        // TabulatedFunction f;
 
-        f = TabulatedFunctions.createTabulatedFunction(
-        ArrayTabulatedFunction.class, 0, 10, 3);
-        System.out.println(f.getClass());
-        System.out.println(f);
+        // f = TabulatedFunctions.createTabulatedFunction(
+        // ArrayTabulatedFunction.class, 0, 10, 3);
+        // System.out.println(f.getClass());
+        // System.out.println(f);
 
-        f = TabulatedFunctions.createTabulatedFunction(
-        ArrayTabulatedFunction.class, 0, 10, new double[] {0, 10});
-        System.out.println(f.getClass());
-        System.out.println(f);
+        // f = TabulatedFunctions.createTabulatedFunction(
+        // ArrayTabulatedFunction.class, 0, 10, new double[] {0, 10});
+        // System.out.println(f.getClass());
+        // System.out.println(f);
 
-        f = TabulatedFunctions.createTabulatedFunction(
-        LinkedListTabulatedFunction.class, 
-        new FunctionPoint[] {
-            new FunctionPoint(0, 0),
-            new FunctionPoint(10, 10)
-        }
-        );
-        System.out.println(f.getClass());
-        System.out.println(f);
+        // f = TabulatedFunctions.createTabulatedFunction(
+        // LinkedListTabulatedFunction.class, 
+        // new FunctionPoint[] {
+        //     new FunctionPoint(0, 0),
+        //     new FunctionPoint(10, 10)
+        // }
+        // );
+        // System.out.println(f.getClass());
+        // System.out.println(f);
 
-        f = TabulatedFunctions.tabulate(LinkedListTabulatedFunction.class, new Sin(), 0, Math.PI, 11);
-        System.out.println(f.getClass());
-        System.out.println(f);
-            }
-}
+        // f = TabulatedFunctions.tabulate(LinkedListTabulatedFunction.class, new Sin(), 0, Math.PI, 11);
+        // System.out.println(f.getClass());
+        // System.out.println(f);
+        //     }
+    }

@@ -73,7 +73,8 @@ public final class TabulatedFunctions {
                 points[i] = new FunctionPoint(x, y);        
             }
 
-            return new ArrayTabulatedFunction(points);
+           // return new ArrayTabulatedFunction(points); // Исправить
+           return factory.createTabulatedFunction(points);
         }
 
         
@@ -102,7 +103,9 @@ public final class TabulatedFunctions {
 
         }
 
-        return new ArrayTabulatedFunction(points);
+       // return new ArrayTabulatedFunction(points); // Исправить
+       return factory.createTabulatedFunction(points);
+
     } catch(IOException e){
         throw new IOException();
     }
