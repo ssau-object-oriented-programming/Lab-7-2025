@@ -76,8 +76,30 @@ public final class TabulatedFunctions {
            // return new ArrayTabulatedFunction(points); // Исправить
            return factory.createTabulatedFunction(points);
         }
+    }
 
-        
+
+
+    public static TabulatedFunction inputTabulatedFunction(
+            InputStream in,
+            Class<? extends TabulatedFunction> functionClass) throws IOException {
+
+        try (DataInputStream dataIn = new DataInputStream(in)) {
+            int pointsCount = dataIn.readInt();
+            FunctionPoint[] points = new FunctionPoint[pointsCount];
+
+            for (int i = 0; i < pointsCount; i++) {
+                points[i] = new FunctionPoint(dataIn.readDouble(), dataIn.readDouble());
+            }
+
+            try {
+                Constructor<? extends TabulatedFunction> constructor = functionClass
+                        .getConstructor(FunctionPoint[].class);
+                return constructor.newInstance((Object) points);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException("Ошибка в создании табулированной функции", e);
+            }
+        }
     }
 
     public static TabulatedFunction readTabulatedFunction(Reader in) throws IOException{
@@ -110,6 +132,40 @@ public final class TabulatedFunctions {
         throw new IOException();
     }
     }
+
+
+public static TabulatedFunction readTabulatedFunction(
+            Reader in,
+            Class<? extends TabulatedFunction> functionClass) throws IOException {
+
+        StreamTokenizer tokenizer = new StreamTokenizer(in);
+        tokenizer.parseNumbers();
+
+        tokenizer.nextToken();
+        int pointsCount = (int) tokenizer.nval;
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+
+        for (int i = 0; i < pointsCount; ++i) {
+            tokenizer.nextToken();
+            double x = tokenizer.nval;
+
+            tokenizer.nextToken();
+            double y = tokenizer.nval;
+
+            points[i] = new FunctionPoint(x, y);
+        }
+
+        try {
+            Constructor<? extends TabulatedFunction> constructor = functionClass
+                    .getConstructor(FunctionPoint[].class);
+            return constructor.newInstance((Object) points);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Ошибка в создании табулированной функции", e);
+        }
+    }
+
+
+
     public static void writeTabulatedFunction(TabulatedFunction function, Writer out) throws IOException{
         int pointsCount = function.getPointsCount();
 
