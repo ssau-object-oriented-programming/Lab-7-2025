@@ -230,4 +230,31 @@ public final class TabulatedFunctions {
         }
         return tabulate(functionClass, function, leftX, rightX, pointsCount);
     }
+    public static TabulatedFunction inputTabulatedFunction(InputStream in,
+                                                           Class<? extends TabulatedFunction> functionClass) throws IOException {
+        DataInputStream dataIn = new DataInputStream(in);
+        int pointsCount = dataIn.readInt();
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+        for (int i = 0; i < pointsCount; i++) {
+            points[i] = new FunctionPoint(dataIn.readDouble(), dataIn.readDouble());
+        }
+        return createTabulatedFunction(functionClass, points);
+    }
+
+    public static TabulatedFunction readTabulatedFunction(Reader in,
+                                                          Class<? extends TabulatedFunction> functionClass) throws IOException {
+        StreamTokenizer tokenizer = new StreamTokenizer(in);
+        tokenizer.parseNumbers();
+        if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) throw new IOException("Ошибка формата");
+        int pointCount = (int) tokenizer.nval;
+        FunctionPoint[] points = new FunctionPoint[pointCount];
+        for (int i = 0; i < pointCount; i++) {
+            if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) throw new IOException("Ошибка X");
+            double x = tokenizer.nval;
+            if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) throw new IOException("Ошибка Y");
+            double y = tokenizer.nval;
+            points[i] = new FunctionPoint(x, y);
+        }
+        return createTabulatedFunction(functionClass, points);
+    }
 }
