@@ -130,4 +130,55 @@ public class TabulatedFunctions {
         }
         return createTabulatedFunction(points);
     }
+    
+    public static TabulatedFunction inputTabulatedFunction(
+            Class<? extends TabulatedFunction> clazz,
+            InputStream in) throws IOException {
+
+        DataInputStream dis = new DataInputStream(in);
+        int count = dis.readInt();
+
+        double[] x = new double[count];
+        double[] y = new double[count];
+
+        for (int i = 0; i < count; i++) {
+            x[i] = dis.readDouble();
+            y[i] = dis.readDouble();
+        }
+
+        try {
+            Constructor<? extends TabulatedFunction> c =
+                    clazz.getConstructor(double.class, double.class, double[].class);
+            return c.newInstance(x[0], x[count - 1], y);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static TabulatedFunction readTabulatedFunction(
+            Class<? extends TabulatedFunction> clazz,
+            Reader in) throws IOException {
+
+        StreamTokenizer st = new StreamTokenizer(in);
+        st.nextToken();
+        int count = (int) st.nval;
+
+        FunctionPoint[] points = new FunctionPoint[count];
+
+        for (int i = 0; i < count; i++) {
+            st.nextToken();
+            double x = st.nval;
+            st.nextToken();
+            double y = st.nval;
+            points[i] = new FunctionPoint(x, y);
+        }
+
+        try {
+            Constructor<? extends TabulatedFunction> c =
+                    clazz.getConstructor(FunctionPoint[].class);
+            return c.newInstance((Object) points);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
 }
